@@ -13,13 +13,13 @@ ObsDetector::ObsDetector(DataSource source, OperationMode mode, ViewerType viewe
 
     //Init data stream from source
     if(source == DataSource::ZED) {
-        zed.open(init_params); 
+        zed.open(init_params);
+            zed.enablePositionalTracking(posTrackingParams);
         auto camera_config = zed.getCameraInformation(cloud_res).camera_configuration;
         defParams = camera_config.calibration_parameters.left_cam;
     } else if(source == DataSource::FILESYSTEM) {
         std::string s = ROOT_DIR;
         s+= "/data/";
-        
         cout << "File data dir: " << endl;
         cout << "[defaulting to: " << s << endl;
         getline(cin, readDir);
@@ -47,7 +47,9 @@ void ObsDetector::setupParamaters(std::string parameterFile) {
     init_params.coordinate_units = sl::UNIT::MILLIMETER;
     init_params.camera_resolution = sl::RESOLUTION::VGA; 
     init_params.camera_fps = 100;
-    
+
+    posTrackingParams.enable_area_memory = true;
+
     //Set the viewer paramas
     defParams.fx = 79.8502;
     defParams.fy = 80.275;
@@ -73,7 +75,12 @@ void ObsDetector::update() {
         zed.grab();
         zed.retrieveMeasure(frame, sl::MEASURE::XYZRGBA, sl::MEM::GPU, cloud_res); 
         getRawCloud(pc, frame);
-        
+        trackingState = zed.getPosition(cameraPose, sl::REFERENCE_FRAME::WORLD);
+        if (trackingState == sl::POSITIONAL_TRACKING_STATE::OK) {
+            cout << cameraPose.getTranslation().tx << " " << cameraPose.getTranslation().ty << " " << cameraPose.getTranslation().tz << "\n";
+        } else {
+            cout << "Get pose failed\n";
+        }
     } else if(source == DataSource::FILESYSTEM) {
         pc = fileReader.readCloudGPU(frameNum);
         if (frameNum == 1) viewer.setTarget();
@@ -161,7 +168,7 @@ void ObsDetector::spinViewer() {
 
 
 int main() {
-    ObsDetector obs(DataSource::FILESYSTEM, OperationMode::DEBUG, ViewerType::GL);
+    ObsDetector obs(DataSource::ZED, OperationMode::DEBUG, ViewerType::GL);
 
     //std::thread updateTick( [&]{while(true) { obs.update();} });
 

@@ -103,10 +103,10 @@ class ObsDetector {
         sl::Camera zed;
         PCDReader fileReader;
 
-        //Viwers
+        //Viewers
         Viewer viewer;
 
-        //Operation paramaters
+        //Operation parameters
         DataSource source;
         OperationMode mode;
         ViewerType viewerType;
@@ -118,10 +118,11 @@ class ObsDetector {
         VoxelGrid *voxelGrid;
         EuclideanClusterExtractor *ece;
 
-        //Paramaters
+        //Parameters
         sl::Resolution cloud_res;
         sl::InitParameters init_params;
         sl::CameraParameters defParams;
+        sl::PositionalTrackingParameters posTrackingParams;
         std::string readDir;
         
         //Output data
@@ -134,5 +135,6 @@ class ObsDetector {
         //Other
         int frameNum = 0;
         bool framePlay = true;
-        
+        sl::Pose cameraPose;
+        sl::POSITIONAL_TRACKING_STATE trackingState;
 };
